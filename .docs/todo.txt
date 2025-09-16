@@ -1,0 +1,29 @@
+-- Zemelapi sukurta galima issaugoti ir po to pasileisti zaidime.
+
+-- Galiu sukurti savo zemelapi is tileset'o. Lango kaireje puseje bus tilesetas isskaidytas i paskirus tile'us, ant kuriu paspaudus su pelyte jie bus pasirinkti. Desineje puseje bus taip pat gridas, i kuri bus galima ideti tile'us. Ant grido celes paspaudus ta pati klavisa kaip tile pasirinkimo, ten atsiras pasirinkto tile'o atvaizdys. 
+
+-- Galiu uploadint zemelapi (tilemap) ir ggaliu i juos atsitrenkti - prarasti gyvybes, mirti, ar but pastumiamas.
+
+-- Zemelapis gali buti didesnis uz ekrana, kad zaidejui einant jis slinktusi i sona arba parodytu kazka naujo.
+
+-- Galiu zaisti bent tris skirtingus lygius.
+
+-- Galiu valdyti zmogeliuka i sonus
+
+-- Galiu pasokti bei nusileisti (gravitacija).
+
+-- Galiu atsitrenkti i objektus (pvz. lubas, siena), negaliu pro juos praeiti, juos apeiti kazkaip kitaip apart valdymo ir basic fizikos.
+
+-- Galiu atsidares faile matyti zemelapio informacija (.json)
+
+-- Galiu numirti
+
+-- Galiu uzbaigti zaidima
+
+-- Kai ijungiu zaidima atsidaro langas, kuri galiu uzdaryti su paspaudimu ant lango arba mygtuku
+
+-- Mano zaidejas turi atvaizda ir animacija keiciasi einant i sonus, arba pasokant
+
+-- Kaip zaidejas galiu surinkti taskus ar kitus renkamus objektus - knygas, kurios prideda arba nuima taskus , kuriuos zaidimo pabaigoje matau. 
+
+-- Baiges zaidima matau savo baigiamaji score. 

@@ -1,0 +1,8 @@
+issirinkti game engine
+	
+	LIBGDX, vien kad pramokt bsk daugiau ir po to kitus game kurt lengviau 2d
+
+nuspresti kaip apdorosiu ir renderinsiu map
+
+	im thinking about using libgdx, but parsing map manually, having specifiactions for tile width/height, having 	tilemap object with coordinates in 1, 2, 3, 4, 5 etc. and having objects object with specified objects, maybe 	another attribute "Collidable; true" or something, i can get their coordinates by multiplying it's row and col 	by its size or smth, that does not matter and i dont care for now for specification, and then i can create 	tangible objects in libgdx with data i got from reading a json file which is created with my custom simple 	tilemapeditor
+
