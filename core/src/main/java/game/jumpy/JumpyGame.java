@@ -36,7 +36,7 @@ public class JumpyGame implements ApplicationListener {
 		obstacleSprite = new Sprite(obstacleImage);
 		obstacleSprite.setSize(TILE_WIDTH * 2, TILE_HEIGHT / 2);
 		obstacleSprite.setX(3f);
-		obstacleSprite.setY(0);
+		obstacleSprite.setY(0.5f);
 
 	}
 
@@ -79,19 +79,6 @@ public class JumpyGame implements ApplicationListener {
 		// prevent from going out of window
 		playerSprite.setX(MathUtils.clamp(playerSprite.getX(), 0, viewport.getWorldWidth() - playerSprite.getWidth()));
 
-		// handle collisions with aabb
-		boolean isCollisionOnRight = playerSprite.getX() + playerSprite.getWidth() > obstacleSprite.getX();
-		boolean isCollisionOnLeft = playerSprite.getX() < obstacleSprite.getX() + obstacleSprite.getWidth();
-		boolean isCollidingOnX = isCollisionOnLeft && isCollisionOnRight;
-		boolean isPlayerOnObstacle = playerSprite.getY() < obstacleSprite.getY() + obstacleSprite.getHeight();
-
-//		if (isCollidingOnX) {
-//			playerSprite.setX(MathUtils.clamp(playerSprite.getX(), 0, obstacleSprite.getX() - playerSprite.getWidth()));
-//		}
-		if (isPlayerOnObstacle && isCollidingOnX) {
-			System.out.println(playerSprite.getY() + " on " + (obstacleSprite.getY() + playerSprite.getHeight()));
-		}
-		boolean isCollisionOnTop = playerSprite.getX() > obstacleSprite.getX();
 	}
 
 	private void input() {
@@ -99,23 +86,26 @@ public class JumpyGame implements ApplicationListener {
 		float speed = 4f;
 		float tpf = Gdx.graphics.getDeltaTime();
 
-		if (isLeft()) {
-			playerSprite.translateX(-speed * tpf);
-		}
-		if (isRight()) {
-			playerSprite.translateX(MathUtils.clamp(speed * tpf, 0, viewport.getWorldWidth()));
-		}
-		if (isJump()) {
-			// jump once ground was touched.
-			if (playerSprite.getY() < 0.05) {
-				// Random numbers mixed together by feels
-				playerSprite.translateY(1.0f);
+		if (!isACollidingWithB(playerSprite, obstacleSprite)) {
+			if (isLeft()) {
+				playerSprite.translateX(-speed * tpf);
 			}
-		} else if (playerSprite.getY() > 0) {
-			// if not on floor, go down
-			playerSprite.translateY(MathUtils.lerp(playerSprite.getY(), 0, jumpDownSpeed) * tpf);
+			if (isRight()) {
+				playerSprite.translateX(MathUtils.clamp(speed * tpf, 0, viewport.getWorldWidth()));
+			}
+			if (isJump()) {
+				// jump once ground was touched.
+				if (playerSprite.getY() < 0.05) {
+					// Random numbers mixed together by feels
+					playerSprite.translateY(1.0f);
+				}
+			} else if (playerSprite.getY() > 0) {
+				// if not on floor, go down
+				playerSprite.translateY(MathUtils.lerp(playerSprite.getY(), 0, jumpDownSpeed) * tpf);
+			}
+		} else {
+			// https://stackoverflow.com/questions/23165381/collisions-between-rectangles
 		}
-
 		// My configuration for turning off window
 		if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) {
 			Gdx.app.exit();
@@ -133,6 +123,14 @@ public class JumpyGame implements ApplicationListener {
 
 	private boolean isJump() {
 		return Gdx.input.isKeyJustPressed(Input.Keys.W) || Gdx.input.isKeyJustPressed(Input.Keys.UP);
+	}
+	
+	private boolean isACollidingWithB(Sprite aSprite, Sprite bSprite) {
+		return aSprite.getX() + aSprite.getWidth() > bSprite.getX() 
+				&& aSprite.getX() < bSprite.getX() + bSprite.getWidth() 
+				&& aSprite.getY() < bSprite.getY() + bSprite.getHeight() 
+				&& aSprite.getY() + aSprite.getHeight() > bSprite.getY();
+		
 	}
 
 }
