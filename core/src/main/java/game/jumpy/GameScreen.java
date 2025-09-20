@@ -3,21 +3,19 @@ package game.jumpy;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.ScreenUtils;
-import com.badlogic.gdx.utils.viewport.FitViewport;
 
-public class JumpyGame implements ApplicationListener {
-	private SpriteBatch batch;
-	private FitViewport viewport;
+public class GameScreen implements Screen {
+
+	final Jumpy game;
 	private Texture playerImage;
 	private Texture obstacleImage;
 	private Texture tilemap;
@@ -35,10 +33,8 @@ public class JumpyGame implements ApplicationListener {
 	TextureRegion[][] tiles;
 	private List<Sprite> obstacles = new ArrayList<Sprite>();
 
-	@Override
-	public void create() {
-		batch = new SpriteBatch();
-		viewport = new FitViewport(12, 10);
+	public GameScreen(final Jumpy game) {
+		this.game = game;
 
 		// Player
 		playerImage = new Texture("rectangle.png");
@@ -49,7 +45,7 @@ public class JumpyGame implements ApplicationListener {
 		obstacleSprite = new Sprite(obstacleImage);
 		obstacleSprite.setSize(TILE_WIDTH * 2, TILE_HEIGHT / 2);
 		obstacleSprite.setX(3f);
-		obstacleSprite.setY(0.5f);
+		obstacleSprite.setY(1.5f);
 
 		obstacleSprite2 = new Sprite(obstacleImage);
 		obstacleSprite2.setSize(TILE_WIDTH * 2, TILE_HEIGHT / 2);
@@ -58,59 +54,71 @@ public class JumpyGame implements ApplicationListener {
 
 		obstacles.add(obstacleSprite);
 		obstacles.add(obstacleSprite2);
-//
-//		tilemap = new Texture("Castle2.png");
-//		tiles = TextureRegion.split(tilemap, TILE_W, TILE_H);
 
 	}
 
 	@Override
-	public void render() {
+	public void render(float delta) {
 		ScreenUtils.clear(Color.BLACK);
-		viewport.apply();
-		batch.setProjectionMatrix(viewport.getCamera().combined);
-		batch.begin();
+		game.viewport.apply();
+		game.batch.setProjectionMatrix(game.viewport.getCamera().combined);
+		game.batch.begin();
 
 		input();
 		logic();
+		// My configuration for turning off window
+		// and switching between windows
+		config();
 
-		playerSprite.draw(batch);
-		obstacleSprite.draw(batch);
-		obstacleSprite2.draw(batch);
-//		for (int i = 0; i < 15; i++) {
-//			batch.draw(tiles[9][i], i, 0.5f, 0.5f, 0.5f);
-//			batch.draw(tiles[9][i], i, 0.5f, 0.5f, 0.5f);
-//		}
+		playerSprite.draw(game.batch);
+		obstacleSprite.draw(game.batch);
+		obstacleSprite2.draw(game.batch);
 
-		batch.end();
+		game.batch.end();
+
 	}
 
 	@Override
-	public void dispose() {
-		batch.dispose();
-		playerImage.dispose();
+	public void show() {
+		// TODO Auto-generated method stub
+
 	}
 
 	@Override
 	public void resize(int width, int height) {
-		viewport.update(width, height, true);
+		game.viewport.update(width, height, true);
+
 	}
 
 	@Override
 	public void pause() {
+		// TODO Auto-generated method stub
+
 	}
 
 	@Override
 	public void resume() {
+		// TODO Auto-generated method stub
+
 	}
 
-	private void doMap() {
+	@Override
+	public void hide() {
+		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public void dispose() {
+		game.batch.dispose();
+		playerImage.dispose();
+		obstacleImage.dispose();
 	}
 
 	private void logic() {
 		// prevent from going out of window
-		playerSprite.setX(MathUtils.clamp(playerSprite.getX(), 0, viewport.getWorldWidth() - playerSprite.getWidth()));
+		playerSprite
+				.setX(MathUtils.clamp(playerSprite.getX(), 0, game.viewport.getWorldWidth() - playerSprite.getWidth()));
 	}
 
 	private void input() {
@@ -123,7 +131,7 @@ public class JumpyGame implements ApplicationListener {
 			playerSprite.translateX(-speed * tpf);
 		}
 		if (isRight()) {
-			playerSprite.translateX(MathUtils.clamp(speed * tpf, 0, viewport.getWorldWidth()));
+			playerSprite.translateX(MathUtils.clamp(speed * tpf, 0, game.viewport.getWorldWidth()));
 		}
 		if (playerSprite.getY() <= 0) {
 			onGround = true;
@@ -141,10 +149,15 @@ public class JumpyGame implements ApplicationListener {
 			handleCollisions(playerSprite, thing);
 		}
 
-		// My configuration for turning off window
+	}
+
+	private void config() {
 		if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) {
 			Gdx.app.exit();
 			System.exit(0);
+		}
+		if (Gdx.input.isKeyPressed(Input.Keys.F8)) {
+			game.setScreen(new EditorScreen(game));
 		}
 	}
 
@@ -201,6 +214,7 @@ public class JumpyGame implements ApplicationListener {
 			if (aSprite.getY() < bSprite.getY()) {
 				// Bottom
 				aSprite.setY(bSprite.getY() - aSprite.getHeight());
+				System.out.println("bottom");
 			} else {
 				// Top
 				aSprite.setY(bSprite.getY() + bSprite.getHeight());
