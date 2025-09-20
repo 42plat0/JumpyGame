@@ -58,9 +58,6 @@ public class JumpyGame implements ApplicationListener {
 
 		obstacles.add(obstacleSprite);
 		obstacles.add(obstacleSprite2);
-//
-//		tilemap = new Texture("Castle2.png");
-//		tiles = TextureRegion.split(tilemap, TILE_W, TILE_H);
 
 	}
 
@@ -77,10 +74,6 @@ public class JumpyGame implements ApplicationListener {
 		playerSprite.draw(batch);
 		obstacleSprite.draw(batch);
 		obstacleSprite2.draw(batch);
-//		for (int i = 0; i < 15; i++) {
-//			batch.draw(tiles[9][i], i, 0.5f, 0.5f, 0.5f);
-//			batch.draw(tiles[9][i], i, 0.5f, 0.5f, 0.5f);
-//		}
 
 		batch.end();
 	}

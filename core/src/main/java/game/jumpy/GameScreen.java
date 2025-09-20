@@ -9,16 +9,15 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 public class GameScreen implements Screen {
 
 	final Jumpy game;
 	private Texture playerImage;
 	private Texture obstacleImage;
-	private Texture tilemap;
 	private Sprite playerSprite;
 	private Sprite obstacleSprite;
 	private Sprite obstacleSprite2;
@@ -28,9 +27,6 @@ public class GameScreen implements Screen {
 	private final float TILE_WIDTH = 0.5f;
 	private final float TILE_HEIGHT = 1f;
 
-	private int TILE_W = 32;
-	private int TILE_H = 32;
-	TextureRegion[][] tiles;
 	private List<Sprite> obstacles = new ArrayList<Sprite>();
 
 	public GameScreen(final Jumpy game) {
@@ -157,7 +153,7 @@ public class GameScreen implements Screen {
 			System.exit(0);
 		}
 		if (Gdx.input.isKeyPressed(Input.Keys.F8)) {
-			game.setScreen(new EditorScreen(game));
+			game.setScreen(new EditorScreen(game, new ScreenViewport()));
 		}
 	}
 
@@ -211,6 +207,7 @@ public class GameScreen implements Screen {
 			}
 		} else {
 			// Top/bottom collision - land on top
+			// TODO fix hitting head with player and not teleporting on top
 			if (aSprite.getY() < bSprite.getY()) {
 				// Bottom
 				aSprite.setY(bSprite.getY() - aSprite.getHeight());

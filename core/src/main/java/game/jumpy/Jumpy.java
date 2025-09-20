@@ -16,7 +16,7 @@ public class Jumpy extends Game {
 		viewport = new ScreenViewport();
 
 //		this.setScreen(new GameScreen(this));
-		this.setScreen(new EditorScreen(this));
+		this.setScreen(new EditorScreen(this, viewport));
 	}
 
 	@Override
