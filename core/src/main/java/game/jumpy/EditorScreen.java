@@ -30,9 +30,9 @@ public class EditorScreen implements Screen {
 
 	private final String IMPORTED_TILESET = "Castle2.png";
 
-	public EditorScreen(final Jumpy game, ScreenViewport viewport) {
+	public EditorScreen(final Jumpy game) {
 		this.game = game;
-		this.viewport = viewport;
+		this.viewport = new ScreenViewport();
 		tilemap = new Texture(IMPORTED_TILESET);
 		tiles = TextureRegion.split(tilemap, TILE_SIZE, TILE_SIZE);
 		placedTiles = new TextureRegion[tiles.length][tiles[0].length];
@@ -57,8 +57,8 @@ public class EditorScreen implements Screen {
 	}
 
 	private void handleSelectTile() {
-		float HEIGHT = game.viewport.getWorldHeight() - TILE_SIZE;
-		float WIDTH = game.viewport.getWorldWidth() / 2;
+		float HEIGHT = viewport.getWorldHeight() - TILE_SIZE;
+		float WIDTH = viewport.getWorldWidth() / 2;
 		int mouseX = Gdx.input.getX();
 		int mouseY = Gdx.input.getY();
 		// Select tile
@@ -70,7 +70,6 @@ public class EditorScreen implements Screen {
 				selectedTile = tiles[row][col];
 			}
 
-			System.out.println(Math.floor(WIDTH / TILE_SIZE));
 			// Checks if we're selecting empty tileset
 			double firstEmptyTileCol = Math.floor(WIDTH / TILE_SIZE);
 			if (row >= 0 && row < tiles.length && col >= firstEmptyTileCol
@@ -83,26 +82,29 @@ public class EditorScreen implements Screen {
 		}
 		// Add it to the mouse
 		if (selectedTile != null) {
-			game.batch.draw(selectedTile, mouseX, game.viewport.getWorldHeight() - mouseY, TILE_SIZE, TILE_SIZE);
+			game.batch.draw(selectedTile, mouseX, viewport.getWorldHeight() - mouseY, TILE_SIZE, TILE_SIZE);
 		}
 	}
 
-	private MapData parseTilemapToSave() {
+	private MapData getParsedMapData() {
 		MapData mapData = new MapData();
 
-		MapData.Tileset tileSetData = mapData.new Tileset();
+		// Tileset data
+		MapData.Tileset tileSetData = new MapData.Tileset();
 		tileSetData.setImage(IMPORTED_TILESET);
 		tileSetData.setTileHeight(TILE_SIZE);
 		tileSetData.setTileWidth(TILE_SIZE);
 		Map<Integer, Tile> tileSetTiles = new HashMap<Integer, Tile>();
 
-		MapData.Tilemap tileMapData = mapData.new Tilemap();
+		// Created tile data
+		MapData.Tilemap tileMapData = new MapData.Tilemap();
 		tileMapData.setWidth(placedTiles.length);
 		tileMapData.setHeight(placedTiles[0].length);
 		int[][] tileMapDataTiles = new int[tileMapData.getWidth()][tileMapData.getHeight()];
 		for (int row = 0; row < tileMapData.getWidth(); row++) {
 			for (int col = 0; col < tileMapData.getHeight(); col++) {
 				TextureRegion currentSelectedTile = placedTiles[row][col];
+				// Empty tiles
 				if (currentSelectedTile == null) {
 					tileMapDataTiles[row][col] = -1;
 					continue;
@@ -112,10 +114,9 @@ public class EditorScreen implements Screen {
 					for (int col1 = 0; col1 < tiles[0].length; col1++) {
 						if (tiles[row1][col1] == currentSelectedTile) {
 							Integer idx = tileSetTiles.size() + 1;
-							MapData.Tile tile = mapData.new Tile();
+							MapData.Tile tile = new MapData.Tile();
 							tile.setRow(row1);
 							tile.setCol(col1);
-
 							// Reuse already inserted tiles
 							for (Entry<Integer, Tile> entry : tileSetTiles.entrySet()) {
 								MapData.Tile t = entry.getValue();
@@ -139,8 +140,8 @@ public class EditorScreen implements Screen {
 	}
 
 	private void drawTiles() {
-		float HEIGHT = game.viewport.getWorldHeight() - TILE_SIZE;
-		float WIDTH = game.viewport.getWorldWidth() / 2;
+		float HEIGHT = viewport.getWorldHeight() - TILE_SIZE;
+		float WIDTH = viewport.getWorldWidth() / 2;
 		// Draw tileset
 		for (int row = 0; row < tiles.length; row++) {
 			for (int col = 0; col < tiles[row].length; col++) {
@@ -174,12 +175,11 @@ public class EditorScreen implements Screen {
 		}
 		if (Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) && Gdx.input.isKeyPressed(Input.Keys.S)) {
 			Json json = new Json();
-			json.setTypeName(null); // disables storing the "class" field
 			FileHandle fh = Gdx.files.local("map.json");
-			MapData mapData = parseTilemapToSave();
-
+			MapData mapData = getParsedMapData();
+			json.setUsePrototypes(false); // forces all fields to be saved
 			fh.writeString(json.prettyPrint(mapData), false);
-			System.out.println("Saved at: " + Gdx.files.local("map.json").file().getAbsolutePath());
+			System.out.println("Saved map at: " + Gdx.files.local("map.json").file().getAbsolutePath());
 		}
 	}
 
@@ -190,7 +190,7 @@ public class EditorScreen implements Screen {
 
 	@Override
 	public void resize(int width, int height) {
-		game.viewport.update(width, height, true);
+		viewport.update(width, height, true);
 
 	}
 

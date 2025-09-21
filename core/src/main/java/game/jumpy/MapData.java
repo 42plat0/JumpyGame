@@ -27,7 +27,7 @@ public class MapData {
 		this.tileset = tileset;
 	}
 
-	public class Tilemap {
+	public static class Tilemap {
 		private int width;
 		private int height;
 		private int[][] tiles;
@@ -57,7 +57,7 @@ public class MapData {
 		}
 	}
 
-	public class Tile {
+	public static class Tile {
 		private int row;
 		private int col;
 
@@ -78,12 +78,12 @@ public class MapData {
 		}
 	}
 
-	public class Tileset {
+	public static class Tileset {
 		private String image;
 		private int tileWidth;
 		private int tileHeight;
 
-		private Map<Integer, Tile> tiles;
+		private Map<Integer, Tile> tilesMap;
 
 		public String getImage() {
 			return image;
@@ -110,11 +110,11 @@ public class MapData {
 		}
 
 		public Map<Integer, Tile> getTiles() {
-			return tiles;
+			return tilesMap;
 		}
 
-		public void setTiles(Map<Integer, Tile> tiles) {
-			this.tiles = tiles;
+		public void setTiles(Map<Integer, Tile> tilesMap) {
+			this.tilesMap = tilesMap;
 		}
 
 	}
