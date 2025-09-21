@@ -43,7 +43,6 @@ public class EditorScreen implements Screen {
 	public void render(float delta) {
 		config();
 
-		Gdx.graphics.setWindowedMode(1440, 800);
 		ScreenUtils.clear(Color.TEAL);
 		viewport.apply();
 		game.batch.setProjectionMatrix(viewport.getCamera().combined);
@@ -185,7 +184,7 @@ public class EditorScreen implements Screen {
 
 	@Override
 	public void show() {
-		// TODO Auto-generated method stub
+		Gdx.graphics.setWindowedMode(1440, 800);
 	}
 
 	@Override

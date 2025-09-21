@@ -25,33 +25,27 @@ public class GameScreen implements Screen {
 
 	final Jumpy game;
 	private Texture playerImage;
-	private Texture obstacleImage;
 	private Sprite playerSprite;
 	private Texture tilemap;
 
 	private TextureRegion[][] tiles;
-	private final String IMPORTED_TILESET = "Castle2.png";
 	private MapData mapData;
 	private boolean onGround = false;
 	private FitViewport viewport;
 
-	private final float TILE_SIZE = 0.5f;
-	private final float TILE_WIDTH = 1f;
-	private final float TILE_HEIGHT = 1f;
+	private final float TILE_SIZE = 1f;
 
 	private List<Sprite> obstacles = new ArrayList<Sprite>();
 
 	public GameScreen(final Jumpy game) {
 		this.game = game;
+		this.viewport = new FitViewport(16, 16);
 
 		// Player
 		playerImage = new Texture("rectangle.png");
 		playerSprite = new Sprite(playerImage);
-		playerSprite.setSize(TILE_WIDTH, TILE_HEIGHT);
-
-		this.viewport = new FitViewport(8, 5);
-//		obstacles.add(obstacleSprite);
-//		obstacles.add(obstacleSprite2);
+		playerSprite.setSize(TILE_SIZE, TILE_SIZE);
+		playerSprite.setPosition(0, TILE_SIZE * 2);
 
 	}
 
@@ -77,6 +71,7 @@ public class GameScreen implements Screen {
 
 	}
 
+	@SuppressWarnings("unlikely-arg-type")
 	public void drawMap() {
 		// Load mapData for 1st time
 		if (mapData == null) {
@@ -104,24 +99,42 @@ public class GameScreen implements Screen {
 				float y = HEIGHT - row * TILE_SIZE; // start from the top of the window since bathc sprite is bottom
 													// left at 0, 0
 				int tileId = mapTiles[row][col];
-				System.out.println(tileId);
+				int tileToPlaceRow = 0;
+				int tileToPlaceCol = 0;
+				// is not empty tile
 				if (tileId != -1) {
+					// map gives null when accessing with int
 					Tile tileFromTileset = tilesetTiles.get(String.valueOf(tileId));
-					System.out.println(mapTiles[row][col]);
-					game.batch.draw(tiles[tileFromTileset.getCol()][tileFromTileset.getRow()], x, y, TILE_SIZE,
-							TILE_SIZE);
-				} else {
-					game.batch.draw(tiles[0][0], x, y, TILE_SIZE, TILE_SIZE);
+					tileToPlaceRow = tileFromTileset.getRow();
+					tileToPlaceCol = tileFromTileset.getCol();
 				}
-//				game.batch.draw(tiles[row][col], x, y, TILE_SIZE, TILE_SIZE);
+				// Draw either an empty tile or actual placed tile
+				game.batch.draw(tiles[tileToPlaceRow][tileToPlaceCol], x, y, TILE_SIZE, TILE_SIZE);
 			}
 		}
-	}
 
-	@Override
-	public void show() {
-		// TODO Auto-generated method stub
+		// Add collidables only once
+		if (obstacles.isEmpty()) {
+			for (int row = 0; row < mapTiles.length; row++) {
+				for (int col = 0; col < mapTiles[row].length; col++) {
+					int tileId = mapTiles[row][col];
+					if (tileId != -1) {
+						float x = col * TILE_SIZE;
+						float y = HEIGHT - row * TILE_SIZE; // start from the top of the window since bathc sprite is
+															// bottom
+															// left at 0, 0
 
+						Tile tileFromTileset = tilesetTiles.get(String.valueOf(tileId));
+						Sprite collisionObject = new Sprite(
+								tiles[tileFromTileset.getRow()][tileFromTileset.getCol()].getTexture());
+						collisionObject.setBounds(x, y, TILE_SIZE, TILE_SIZE);
+						obstacles.add(collisionObject);
+
+					}
+				}
+			}
+
+		}
 	}
 
 	@Override
@@ -129,32 +142,12 @@ public class GameScreen implements Screen {
 		viewport.update(width, height, true);
 		viewport.getCamera().position.set(viewport.getWorldWidth() / 2, viewport.getWorldHeight() / 2, 0);
 		viewport.getCamera().update();
-
-	}
-
-	@Override
-	public void pause() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void resume() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void hide() {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void dispose() {
 		game.batch.dispose();
 		playerImage.dispose();
-		obstacleImage.dispose();
 	}
 
 	private void logic() {
@@ -163,9 +156,9 @@ public class GameScreen implements Screen {
 	}
 
 	private void input() {
-		float jumpDownSpeed = 32f;
-		float jumpSize = 32f;
-		float speed = 32f * 3;
+		float jumpDownSpeed = 3f;
+		float jumpSize = TILE_SIZE * 4f;
+		float speed = TILE_SIZE * 4f;
 		float tpf = Gdx.graphics.getDeltaTime();
 
 		if (isLeft()) {
@@ -217,6 +210,7 @@ public class GameScreen implements Screen {
 	private void handleCollisions(Sprite aSprite, Sprite bSprite) {
 		// Resolving collisions
 		if (isACollidingWithB(aSprite, bSprite)) {
+			System.out.println("colliding");
 			resolveCollision(aSprite, bSprite);
 		}
 	}
@@ -231,13 +225,13 @@ public class GameScreen implements Screen {
 
 	private void resolveCollision(Sprite aSprite, Sprite bSprite) {
 		// Calculate overlap on X
-		float overlapX1 = aSprite.getX() + aSprite.getWidth() - bSprite.getX();
-		float overlapX2 = bSprite.getX() + bSprite.getWidth() - aSprite.getX();
+		float overlapX1 = aSprite.getX() + TILE_SIZE - bSprite.getX();
+		float overlapX2 = bSprite.getX() + TILE_SIZE - aSprite.getX();
 		float overlapX = Math.min(overlapX1, overlapX2);
 
 		// Calculate overlap on Y
-		float overlapY1 = aSprite.getY() + aSprite.getHeight() - bSprite.getY();
-		float overlapY2 = bSprite.getY() + bSprite.getHeight() - aSprite.getY();
+		float overlapY1 = aSprite.getY() + TILE_SIZE - bSprite.getY();
+		float overlapY2 = bSprite.getY() + TILE_SIZE - aSprite.getY();
 		float overlapY = Math.min(overlapY1, overlapY2);
 
 		// Resolve collision
@@ -245,25 +239,48 @@ public class GameScreen implements Screen {
 			// Side collision
 			if (aSprite.getX() < bSprite.getX()) {
 				// Left
-				aSprite.setX(bSprite.getX() - aSprite.getWidth());
+				aSprite.setX(bSprite.getX() - TILE_SIZE);
 			} else {
 				// Right
-				aSprite.setX(bSprite.getX() + bSprite.getWidth());
+				aSprite.setX(bSprite.getX() + TILE_SIZE);
 			}
 		} else {
 			// Top/bottom collision - land on top
 			// TODO fix hitting head with player and not teleporting on top
 			if (aSprite.getY() < bSprite.getY()) {
 				// Bottom
-				aSprite.setY(bSprite.getY() - aSprite.getHeight());
+				aSprite.setY(bSprite.getY() - TILE_SIZE);
 				System.out.println("bottom");
 			} else {
 				// Top
-				aSprite.setY(bSprite.getY() + bSprite.getHeight());
+				aSprite.setY(bSprite.getY() + TILE_SIZE);
 				onGround = true;
 			}
 		}
 
 	}
 
+	@Override
+	public void pause() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void resume() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void hide() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void show() {
+		// TODO Auto-generated method stub
+
+	}
 }
