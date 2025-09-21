@@ -1,5 +1,9 @@
 package game.jumpy;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
@@ -10,6 +14,8 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+
+import game.jumpy.MapData.Tile;
 
 public class EditorScreen implements Screen {
 	private Jumpy game;
@@ -22,12 +28,13 @@ public class EditorScreen implements Screen {
 	private TextureRegion selectedTile;
 	private Texture emptyTile = new Texture("emptyTile.png");
 
+	private final String IMPORTED_TILESET = "Castle2.png";
+
 	public EditorScreen(final Jumpy game, ScreenViewport viewport) {
 		this.game = game;
 		this.viewport = viewport;
-		tilemap = new Texture("Castle2.png");
+		tilemap = new Texture(IMPORTED_TILESET);
 		tiles = TextureRegion.split(tilemap, TILE_SIZE, TILE_SIZE);
-		;
 		placedTiles = new TextureRegion[tiles.length][tiles[0].length];
 
 	}
@@ -80,10 +87,55 @@ public class EditorScreen implements Screen {
 		}
 	}
 
-	private String placedTileToJsonData() {
-		int[][] saveableTiles = new int[placedTiles.length][placedTiles[0].length];
-		saveableTiles[0][0] = 123;
-		return saveableTiles.toString();
+	private MapData parseTilemapToSave() {
+		MapData mapData = new MapData();
+
+		MapData.Tileset tileSetData = mapData.new Tileset();
+		tileSetData.setImage(IMPORTED_TILESET);
+		tileSetData.setTileHeight(TILE_SIZE);
+		tileSetData.setTileWidth(TILE_SIZE);
+		Map<Integer, Tile> tileSetTiles = new HashMap<Integer, Tile>();
+
+		MapData.Tilemap tileMapData = mapData.new Tilemap();
+		tileMapData.setWidth(placedTiles.length);
+		tileMapData.setHeight(placedTiles[0].length);
+		int[][] tileMapDataTiles = new int[tileMapData.getWidth()][tileMapData.getHeight()];
+		for (int row = 0; row < tileMapData.getWidth(); row++) {
+			for (int col = 0; col < tileMapData.getHeight(); col++) {
+				TextureRegion currentSelectedTile = placedTiles[row][col];
+				if (currentSelectedTile == null) {
+					tileMapDataTiles[row][col] = -1;
+					continue;
+				}
+				// Inefficiently loop through originally split tiles and search for a match
+				for (int row1 = 0; row1 < tiles.length; row1++) {
+					for (int col1 = 0; col1 < tiles[0].length; col1++) {
+						if (tiles[row1][col1] == currentSelectedTile) {
+							Integer idx = tileSetTiles.size() + 1;
+							MapData.Tile tile = mapData.new Tile();
+							tile.setRow(row1);
+							tile.setCol(col1);
+
+							// Reuse already inserted tiles
+							for (Entry<Integer, Tile> entry : tileSetTiles.entrySet()) {
+								MapData.Tile t = entry.getValue();
+								if (t.getCol() == col1 && t.getRow() == row1) {
+									idx = entry.getKey();
+								}
+							}
+							tileSetTiles.put(idx, tile);
+							tileMapDataTiles[row][col] = Integer.valueOf(idx);
+							break;
+						}
+					}
+				}
+			}
+		}
+		tileMapData.setTiles(tileMapDataTiles);
+		tileSetData.setTiles(tileSetTiles);
+		mapData.setMap(tileMapData);
+		mapData.setTileset(tileSetData);
+		return mapData;
 	}
 
 	private void drawTiles() {
@@ -122,11 +174,12 @@ public class EditorScreen implements Screen {
 		}
 		if (Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) && Gdx.input.isKeyPressed(Input.Keys.S)) {
 			Json json = new Json();
+			json.setTypeName(null); // disables storing the "class" field
 			FileHandle fh = Gdx.files.local("map.json");
+			MapData mapData = parseTilemapToSave();
 
-			String jsonData = placedTileToJsonData();
-			fh.writeString(json.prettyPrint(jsonData), false);
-//			System.out.println("Saved at: " + Gdx.files.local("map.json").file().getAbsolutePath());
+			fh.writeString(json.prettyPrint(mapData), false);
+			System.out.println("Saved at: " + Gdx.files.local("map.json").file().getAbsolutePath());
 		}
 	}
 
