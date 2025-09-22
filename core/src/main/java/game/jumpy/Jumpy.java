@@ -6,17 +6,17 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 public class Jumpy extends Game {
 	public SpriteBatch batch;
-//	public FitViewport viewport;
+	// even tho we have viewports for screens
+	// this prevents initial error
 	public ScreenViewport viewport;
 
 	@Override
 	public void create() {
 		batch = new SpriteBatch();
-//		viewport = new FitViewport(8, 5);
 		viewport = new ScreenViewport();
 
-		this.setScreen(new GameScreen(this));
-//		this.setScreen(new EditorScreen(this));
+//		this.setScreen(new GameScreen(this));
+		this.setScreen(new EditorScreen(this));
 	}
 
 	@Override

@@ -28,6 +28,8 @@ public class EditorScreen implements Screen {
 	private TextureRegion selectedTile;
 	private Texture emptyTile = new Texture("emptyTile.png");
 
+	private Map<String, Tile> tilemapObjects = new HashMap<String, Tile>();
+
 	private final String IMPORTED_TILESET = "Castle2.png";
 
 	public EditorScreen(final Jumpy game) {
@@ -60,22 +62,62 @@ public class EditorScreen implements Screen {
 		float WIDTH = viewport.getWorldWidth() / 2;
 		int mouseX = Gdx.input.getX();
 		int mouseY = Gdx.input.getY();
+
+		// compute column/row
+		int col = mouseX / TILE_SIZE;
+		int row = mouseY / TILE_SIZE;
 		// Select tile
 		if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
-			// compute column/row
-			int col = mouseX / TILE_SIZE;
-			int row = mouseY / TILE_SIZE;
 			if (row >= 0 && row < tiles.length && col >= 0 && col < tiles[0].length) {
 				selectedTile = tiles[row][col];
 			}
-
 			// Checks if we're selecting empty tileset
+			// To create our own map
 			double firstEmptyTileCol = Math.floor(WIDTH / TILE_SIZE);
 			if (row >= 0 && row < tiles.length && col >= firstEmptyTileCol
 					&& col < tiles[0].length + firstEmptyTileCol) {
 				if (selectedTile != null) {
 					col -= firstEmptyTileCol;
 					placedTiles[row][col] = selectedTile;
+				}
+			}
+			// Object adding
+		} else if (Gdx.input.isButtonPressed(Input.Buttons.RIGHT)) {
+			// Checks if we're selecting empty tileset
+			Double firstEmptyTileCol = Math.floor(WIDTH / TILE_SIZE);
+			if (row >= 0 && row < tiles.length && col >= firstEmptyTileCol
+					&& col < tiles[0].length + firstEmptyTileCol) {
+				// Add an object if there's a tile there
+				String objectName = null;
+				// Hacky way of defining a couple of specific objects
+				if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+					objectName = MapData.START_OBJ;
+				}
+				if (Gdx.input.isKeyPressed(Input.Keys.E)) {
+					objectName = MapData.END_OBJ;
+				}
+				if (Gdx.input.isKeyPressed(Input.Keys.P)) {
+					objectName = MapData.SCORE_POINT_OBJ;
+				}
+				// Set an object only when specific buttons are pressed
+				if (objectName != null) {
+					Tile objectTile = new Tile();
+					objectTile.setCol(col - firstEmptyTileCol.intValue()); // since cols are little more to the right
+					objectTile.setRow(tiles.length - row); // since we're setting from the bottom up
+					boolean isAdd = true;
+					for (Entry<String, Tile> insertedObject : tilemapObjects.entrySet()) {
+						// Add only unique objects in coordinates and name.
+						// Maybe not a great idea but works for now
+						if (insertedObject.getKey().equals(objectName)
+								&& objectTile.equals(insertedObject.getValue())) {
+							isAdd = false;
+						}
+					}
+					if (tilemapObjects.isEmpty() || isAdd) {
+						tilemapObjects.put(objectName, objectTile);
+						System.out.println("Object " + objectName + " has been added");
+
+					}
 				}
 			}
 		}
@@ -130,6 +172,10 @@ public class EditorScreen implements Screen {
 					}
 				}
 			}
+		}
+		// Add objects if there are none
+		if (!tilemapObjects.isEmpty()) {
+			tileMapData.setObjectsList(tilemapObjects);
 		}
 		tileMapData.setTiles(tileMapDataTiles);
 		tileSetData.setTiles(tileSetTiles);

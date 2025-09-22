@@ -3,6 +3,7 @@ package game.jumpy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -36,6 +37,7 @@ public class GameScreen implements Screen {
 	private final float TILE_SIZE = 1f;
 
 	private List<Sprite> obstacles = new ArrayList<Sprite>();
+	private List<String> objects = new ArrayList<String>();
 
 	public GameScreen(final Jumpy game) {
 		this.game = game;
@@ -45,7 +47,6 @@ public class GameScreen implements Screen {
 		playerImage = new Texture("rectangle.png");
 		playerSprite = new Sprite(playerImage);
 		playerSprite.setSize(TILE_SIZE, TILE_SIZE);
-		playerSprite.setPosition(0, TILE_SIZE * 2);
 
 	}
 
@@ -64,8 +65,6 @@ public class GameScreen implements Screen {
 		config();
 		drawMap();
 		playerSprite.draw(game.batch);
-//		obstacleSprite.draw(game.batch);
-//		obstacleSprite2.draw(game.batch);
 
 		game.batch.end();
 
@@ -90,6 +89,29 @@ public class GameScreen implements Screen {
 		tilemap = new Texture(tilesetData.getImage());
 		tiles = TextureRegion.split(tilemap, tilesetData.getTileWidth(), tilesetData.getTileHeight());
 
+		Map<String, Tile> userObjects = map.getObjects();
+		if (objects.isEmpty() && userObjects != null) {
+			// Set objects
+			for (Entry<String, Tile> object : userObjects.entrySet()) {
+				String objectName = object.getKey();
+				Tile objectTile = object.getValue();
+
+				if (MapData.START_OBJ.equals(objectName) && playerSprite != null) {
+					float x = objectTile.getCol() * TILE_SIZE;
+					float y = objectTile.getRow() * TILE_SIZE;
+					playerSprite.setPosition(x, y);
+					objects.add(objectName);
+				}
+				if (MapData.END_OBJ.equals(objectName) && playerSprite != null) {
+					// Do something when end of the level is reached
+				}
+				if (MapData.SCORE_POINT_OBJ.equals(objectName) && playerSprite != null) {
+					// Do something when player gets a point
+				}
+
+			}
+
+		}
 		Map<Integer, Tile> tilesetTiles = tilesetData.getTiles();
 
 		// Draw tileset
@@ -133,7 +155,6 @@ public class GameScreen implements Screen {
 					}
 				}
 			}
-
 		}
 	}
 

@@ -11,6 +11,10 @@ public class MapData {
 	private Tilemap map;
 	private Tileset tileset;
 
+	public final static String START_OBJ = "start";
+	public final static String END_OBJ = "end";
+	public final static String SCORE_POINT_OBJ = "scorePoint";
+
 	public Tilemap getMap() {
 		return map;
 	}
@@ -27,10 +31,16 @@ public class MapData {
 		this.tileset = tileset;
 	}
 
+	/**
+	 * Class for created tilemap by user
+	 *
+	 * @author gytis
+	 */
 	public static class Tilemap {
 		private int width;
 		private int height;
 		private int[][] tiles;
+		private Map<String, Tile> objects;
 
 		public int getWidth() {
 			return width;
@@ -55,8 +65,21 @@ public class MapData {
 		public void setTiles(int[][] tiles) {
 			this.tiles = tiles;
 		}
+
+		public Map<String, Tile> getObjects() {
+			return objects;
+		}
+
+		public void setObjectsList(Map<String, Tile> objects) {
+			this.objects = objects;
+		}
 	}
 
+	/**
+	 * Class for tile from tileset info
+	 *
+	 * @author gytis
+	 */
 	public static class Tile {
 		private int row;
 		private int col;
@@ -78,6 +101,11 @@ public class MapData {
 		}
 	}
 
+	/**
+	 * Class for tileset used by user
+	 *
+	 * @author gytis
+	 */
 	public static class Tileset {
 		private String image;
 		private int tileWidth;
