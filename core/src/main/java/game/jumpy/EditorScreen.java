@@ -54,7 +54,6 @@ public class EditorScreen implements Screen {
 		handleSelectTile();
 
 		game.batch.end();
-
 	}
 
 	private void handleSelectTile() {
@@ -103,7 +102,8 @@ public class EditorScreen implements Screen {
 				if (objectName != null) {
 					Tile objectTile = new Tile();
 					objectTile.setCol(col - firstEmptyTileCol.intValue()); // since cols are little more to the right
-					objectTile.setRow(tiles.length - row); // since we're setting from the bottom up
+					objectTile.setRow(tiles.length - row - 1); // since we're setting from the bottom up and off by 1
+																// idk why
 					boolean isAdd = true;
 					for (Entry<String, Tile> insertedObject : tilemapObjects.entrySet()) {
 						// Add only unique objects in coordinates and name.
@@ -215,17 +215,34 @@ public class EditorScreen implements Screen {
 			Gdx.app.exit();
 			System.exit(0);
 		}
-		if (Gdx.input.isKeyPressed(Input.Keys.F9)) {
-			game.setScreen(new GameScreen(game));
-		}
-		if (Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) && Gdx.input.isKeyPressed(Input.Keys.S)) {
-			Json json = new Json();
-			FileHandle fh = Gdx.files.local("map.json");
+		if (Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) && Gdx.input.isKeyJustPressed(Input.Keys.S)) {
 			MapData mapData = getParsedMapData();
-			json.setUsePrototypes(false); // forces all fields to be saved
-			fh.writeString(json.prettyPrint(mapData), false);
-			System.out.println("Saved map at: " + Gdx.files.local("map.json").file().getAbsolutePath());
+			saveMap(mapData);
 		}
+	}
+
+	private void saveMap(MapData mapData) {
+		FileHandle folder = Gdx.files.local("levels/");
+
+		if (!folder.exists()) {
+			folder.mkdirs();
+		}
+
+		// Find the next available level number
+		int levelNumber = 1;
+		while (folder.child("level" + levelNumber + ".json").exists()) {
+			levelNumber++;
+		}
+
+		// Create the file
+		FileHandle file = folder.child("level" + levelNumber + ".json");
+
+		// Write map data
+		Json json = new Json();
+		json.setUsePrototypes(false); // forces all fields to be saved
+		file.writeString(json.prettyPrint(mapData), false);
+
+		System.out.println("Saved: " + file.path());
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 package game.jumpy;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -24,7 +25,7 @@ import game.jumpy.MapData.Tileset;
 
 public class GameScreen implements Screen {
 
-	final Jumpy game;
+	public final Jumpy game;
 	private Texture playerImage;
 	private Sprite playerSprite;
 	private Texture tilemap;
@@ -37,11 +38,15 @@ public class GameScreen implements Screen {
 	private final float TILE_SIZE = 1f;
 
 	private List<Sprite> obstacles = new ArrayList<Sprite>();
-	private List<String> objects = new ArrayList<String>();
+	private Map<String, Sprite> objects = new HashMap<String, Sprite>();
 
-	public GameScreen(final Jumpy game) {
+	private FileHandle folder = Gdx.files.local("levels/");
+	private String mapFile;
+
+	public GameScreen(final Jumpy game, String mapFile) {
 		this.game = game;
 		this.viewport = new FitViewport(16, 16);
+		this.mapFile = mapFile;
 
 		// Player
 		playerImage = new Texture("rectangle.png");
@@ -56,27 +61,38 @@ public class GameScreen implements Screen {
 
 		viewport.apply();
 		game.batch.setProjectionMatrix(viewport.getCamera().combined);
+		loadMap();
 		game.batch.begin();
-
 		input();
 		logic();
 		// My configuration for turning off window
 		// and switching between windows
-		config();
 		drawMap();
 		playerSprite.draw(game.batch);
 
 		game.batch.end();
+		config();
+
+	}
+
+	private void loadMap() {
+		// Load mapData for 1st time
+		if (mapData == null) {
+			Json json = new Json();
+			FileHandle fh = folder.child(mapFile);
+			if (fh.exists()) {
+				mapData = json.fromJson(MapData.class, fh.readString());
+				return;
+			}
+			game.setScreen(new EditorScreen(game));
+			dispose();
+		}
 
 	}
 
 	@SuppressWarnings("unlikely-arg-type")
 	public void drawMap() {
-		// Load mapData for 1st time
 		if (mapData == null) {
-			Json json = new Json();
-			FileHandle fh = Gdx.files.local("map.json");
-			mapData = json.fromJson(MapData.class, fh.readString());
 			return;
 		}
 
@@ -100,17 +116,21 @@ public class GameScreen implements Screen {
 					float x = objectTile.getCol() * TILE_SIZE;
 					float y = objectTile.getRow() * TILE_SIZE;
 					playerSprite.setPosition(x, y);
-					objects.add(objectName);
+					objects.put(objectName, null); // dead object
 				}
 				if (MapData.END_OBJ.equals(objectName) && playerSprite != null) {
 					// Do something when end of the level is reached
+					float x = objectTile.getCol() * TILE_SIZE;
+					float y = objectTile.getRow() * TILE_SIZE;
+					Sprite endSprite = new Sprite();
+					endSprite.setPosition(x, y);
+					endSprite.setBounds(x, y, TILE_SIZE, TILE_SIZE);
+					objects.put(objectName, endSprite);
 				}
 				if (MapData.SCORE_POINT_OBJ.equals(objectName) && playerSprite != null) {
 					// Do something when player gets a point
 				}
-
 			}
-
 		}
 		Map<Integer, Tile> tilesetTiles = tilesetData.getTiles();
 
@@ -167,8 +187,8 @@ public class GameScreen implements Screen {
 
 	@Override
 	public void dispose() {
-		game.batch.dispose();
-		playerImage.dispose();
+//		game.batch.dispose();
+//		playerImage.dispose();
 	}
 
 	private void logic() {
@@ -179,7 +199,7 @@ public class GameScreen implements Screen {
 	private void input() {
 		float jumpDownSpeed = 3f;
 		float jumpSize = TILE_SIZE * 4f;
-		float speed = TILE_SIZE * 4f;
+		float speed = TILE_SIZE * 8f;
 		float tpf = Gdx.graphics.getDeltaTime();
 
 		if (isLeft()) {
@@ -200,6 +220,24 @@ public class GameScreen implements Screen {
 			onGround = false;
 		}
 
+		for (Entry<String, Sprite> object : objects.entrySet()) {
+			String objectName = object.getKey();
+			Sprite objectSprite = object.getValue();
+
+			if (MapData.END_OBJ.equals(objectName) && isACollidingWithB(playerSprite, objectSprite)) {
+				System.out.println("Reached the end!");
+				// Player touched END
+				String nextLevel = getLastLevelName();
+				if (folder.child(nextLevel).exists()) {
+					game.setScreen(new GameScreen(game, nextLevel));
+					dispose();
+					return;
+				}
+				game.setScreen(new EndScreen(game, "You win!"));
+				dispose();
+			}
+		}
+
 		for (Sprite thing : obstacles) {
 			handleCollisions(playerSprite, thing);
 		}
@@ -211,8 +249,9 @@ public class GameScreen implements Screen {
 			Gdx.app.exit();
 			System.exit(0);
 		}
-		if (Gdx.input.isKeyPressed(Input.Keys.F8)) {
+		if (Gdx.input.isKeyPressed(Input.Keys.M)) {
 			game.setScreen(new EditorScreen(game));
+			dispose();
 		}
 	}
 
@@ -231,9 +270,15 @@ public class GameScreen implements Screen {
 	private void handleCollisions(Sprite aSprite, Sprite bSprite) {
 		// Resolving collisions
 		if (isACollidingWithB(aSprite, bSprite)) {
-			System.out.println("colliding");
 			resolveCollision(aSprite, bSprite);
 		}
+
+	}
+
+	private String getLastLevelName() {
+		String number = mapFile.replace("level", "").replace(".json", "");
+		int next = Integer.parseInt(number) + 1;
+		return "level" + next + ".json";
 	}
 
 	private boolean isACollidingWithB(Sprite aSprite, Sprite bSprite) {
