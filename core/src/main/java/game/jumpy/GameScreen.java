@@ -12,6 +12,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
@@ -43,6 +44,10 @@ public class GameScreen implements Screen {
 	private FileHandle folder = Gdx.files.local("levels/");
 	private String mapFile;
 
+	private Texture playerSpriteSheet;
+	private Animation<TextureRegion> idleAnimation;
+	private float stateTime = 0f;
+
 	public GameScreen(final Jumpy game, String mapFile) {
 		this.game = game;
 		this.viewport = new FitViewport(16, 16);
@@ -53,22 +58,41 @@ public class GameScreen implements Screen {
 		playerSprite = new Sprite(playerImage);
 		playerSprite.setSize(TILE_SIZE, TILE_SIZE);
 
+		handlePlayerSprite();
+	}
+
+	public void handlePlayerSprite() {
+		playerSpriteSheet = new Texture("frog_spritesheet.png");
+		TextureRegion[][] sheet = TextureRegion.split(playerSpriteSheet, 32, 32);
+
+		// Get only idle frames from sprite sheet
+		int idleFrameSize = 4;
+		TextureRegion[] idleFrames = new TextureRegion[idleFrameSize];
+		for (int i = 0; i < idleFrameSize; i++) {
+			idleFrames[i] = sheet[0][i];
+		}
+		idleAnimation = new Animation<TextureRegion>(0.01f, idleFrames);
 	}
 
 	@Override
 	public void render(float delta) {
 		ScreenUtils.clear(Color.BLACK);
-
 		viewport.apply();
 		game.batch.setProjectionMatrix(viewport.getCamera().combined);
 		loadMap();
+
+		// Animations for player sprite
+		stateTime += 1 / 60f;
+		TextureRegion currentFrame = idleAnimation.getKeyFrame(stateTime, true);
+
 		game.batch.begin();
 		input();
 		logic();
 		// My configuration for turning off window
 		// and switching between windows
 		drawMap();
-		playerSprite.draw(game.batch);
+
+		game.batch.draw(currentFrame, playerSprite.getX(), playerSprite.getY(), TILE_SIZE, TILE_SIZE);
 
 		game.batch.end();
 		config();
@@ -187,8 +211,8 @@ public class GameScreen implements Screen {
 
 	@Override
 	public void dispose() {
-//		game.batch.dispose();
-//		playerImage.dispose();
+		playerImage.dispose();
+		playerSpriteSheet.dispose();
 	}
 
 	private void logic() {
