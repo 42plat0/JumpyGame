@@ -30,13 +30,16 @@ public class GameScreen implements Screen {
 	private Texture playerImage;
 	private Sprite playerSprite;
 	private Texture tilemap;
-
-	private TextureRegion[][] tiles;
-	private MapData mapData;
-	private boolean onGround = false;
 	private FitViewport viewport;
+	private MapData mapData;
+	private TextureRegion[][] tiles;
 
 	private final float TILE_SIZE = 1f;
+	private final float GRAVITY = 3f;
+	private final float JUMP_SPEED = TILE_SIZE * 4f;
+	private final float VELOCITY = TILE_SIZE * 8f;
+	private boolean onGround = false;
+	private boolean isWalking = false;
 
 	private List<Sprite> obstacles = new ArrayList<Sprite>();
 	private Map<String, Sprite> objects = new HashMap<String, Sprite>();
@@ -46,7 +49,11 @@ public class GameScreen implements Screen {
 
 	private Texture playerSpriteSheet;
 	private Animation<TextureRegion> idleAnimation;
-	private float stateTime = 0f;
+	private Animation<TextureRegion> walkingAnimation;
+	private float idleStateTime = 0f;
+	private float walkingStateTime = 0f;
+	private boolean flip = false;
+	private boolean lastFacingLeft = false;
 
 	public GameScreen(final Jumpy game, String mapFile) {
 		this.game = game;
@@ -63,7 +70,7 @@ public class GameScreen implements Screen {
 
 	public void handlePlayerSprite() {
 		playerSpriteSheet = new Texture("frog_spritesheet.png");
-		TextureRegion[][] sheet = TextureRegion.split(playerSpriteSheet, 32, 32);
+		TextureRegion[][] sheet = TextureRegion.split(playerSpriteSheet, 64, 32);
 
 		// Get only idle frames from sprite sheet
 		int idleFrameSize = 4;
@@ -71,7 +78,13 @@ public class GameScreen implements Screen {
 		for (int i = 0; i < idleFrameSize; i++) {
 			idleFrames[i] = sheet[0][i];
 		}
-		idleAnimation = new Animation<TextureRegion>(0.01f, idleFrames);
+		idleAnimation = new Animation<TextureRegion>(0.1f, idleFrames);
+		int walkingFrameSize = 7;
+		TextureRegion[] walkingFrames = new TextureRegion[walkingFrameSize];
+		for (int i = 0; i < walkingFrameSize; i++) {
+			walkingFrames[i] = sheet[1][i];
+		}
+		walkingAnimation = new Animation<TextureRegion>(0.1f, walkingFrames);
 	}
 
 	@Override
@@ -82,17 +95,33 @@ public class GameScreen implements Screen {
 		loadMap();
 
 		// Animations for player sprite
-		stateTime += 1 / 60f;
-		TextureRegion currentFrame = idleAnimation.getKeyFrame(stateTime, true);
+		// Idle animation
+		TextureRegion idleCurrentFrame = idleAnimation.getKeyFrame(idleStateTime, true);
+
+		// Walking animation
+		if (isWalking) {
+			walkingStateTime += delta;
+		} else {
+			idleStateTime += delta;
+		}
+		TextureRegion walkingCurrentFrame = walkingAnimation.getKeyFrame(walkingStateTime, true);
 
 		game.batch.begin();
 		input();
 		logic();
-		// My configuration for turning off window
-		// and switching between windows
 		drawMap();
 
-		game.batch.draw(currentFrame, playerSprite.getX(), playerSprite.getY(), TILE_SIZE, TILE_SIZE);
+		if (isWalking) {
+			if (walkingCurrentFrame.isFlipX() != flip) {
+				walkingCurrentFrame.flip(true, false);
+			}
+			game.batch.draw(walkingCurrentFrame, playerSprite.getX(), playerSprite.getY(), TILE_SIZE * 2, TILE_SIZE);
+		} else {
+			if (idleCurrentFrame.isFlipX() != lastFacingLeft) {
+				idleCurrentFrame.flip(true, false);
+			}
+			game.batch.draw(idleCurrentFrame, playerSprite.getX(), playerSprite.getY(), TILE_SIZE * 2, TILE_SIZE);
+		}
 
 		game.batch.end();
 		config();
@@ -221,26 +250,34 @@ public class GameScreen implements Screen {
 	}
 
 	private void input() {
-		float jumpDownSpeed = 3f;
-		float jumpSize = TILE_SIZE * 4f;
-		float speed = TILE_SIZE * 8f;
 		float tpf = Gdx.graphics.getDeltaTime();
 
+		isWalking = isLeft() || isRight();
+		flip = isLeft() ? true : false;
+		if (isWalking) {
+			if (isLeft()) {
+				lastFacingLeft = true;
+			} else if (isRight()) {
+				lastFacingLeft = false;
+			}
+		}
+
 		if (isLeft()) {
-			playerSprite.translateX(-speed * tpf);
+			playerSprite.translateX(-VELOCITY * tpf);
 		}
 		if (isRight()) {
-			playerSprite.translateX(MathUtils.clamp(speed * tpf, 0, viewport.getWorldWidth()));
+			playerSprite.translateX(MathUtils.clamp(VELOCITY * tpf, 0, viewport.getWorldWidth()));
 		}
+
 		if (playerSprite.getY() <= 0) {
 			onGround = true;
 		}
 
 		if (isJump() && onGround) {
-			playerSprite.translateY(jumpSize);
+			playerSprite.translateY(JUMP_SPEED);
 		} else if (playerSprite.getY() > 0) {
 			// if not on floor, go down
-			playerSprite.translateY(-jumpDownSpeed * tpf);
+			playerSprite.translateY(-GRAVITY * tpf);
 			onGround = false;
 		}
 
