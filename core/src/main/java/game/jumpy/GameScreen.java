@@ -29,6 +29,8 @@ public class GameScreen implements Screen {
 	public final Jumpy game;
 	private Texture playerImage;
 	private Sprite playerSprite;
+	private Texture backgroundTexture;
+	private Sprite backgroundSprite;
 	private Texture tilemap;
 	private FitViewport viewport;
 	private MapData mapData;
@@ -38,6 +40,7 @@ public class GameScreen implements Screen {
 	private final float GRAVITY = 3f;
 	private final float JUMP_SPEED = TILE_SIZE * 4f;
 	private final float VELOCITY = TILE_SIZE * 8f;
+	private float jumpVelocity = 0f;
 	private boolean onGround = false;
 	private boolean isWalking = false;
 
@@ -65,26 +68,11 @@ public class GameScreen implements Screen {
 		playerSprite = new Sprite(playerImage);
 		playerSprite.setSize(TILE_SIZE, TILE_SIZE);
 
+		backgroundTexture = new Texture("background_layer_1.png");
+		backgroundSprite = new Sprite(backgroundTexture);
+		backgroundSprite.setSize(16, 16);
+
 		handlePlayerSprite();
-	}
-
-	public void handlePlayerSprite() {
-		playerSpriteSheet = new Texture("frog_spritesheet.png");
-		TextureRegion[][] sheet = TextureRegion.split(playerSpriteSheet, 64, 32);
-
-		// Get only idle frames from sprite sheet
-		int idleFrameSize = 4;
-		TextureRegion[] idleFrames = new TextureRegion[idleFrameSize];
-		for (int i = 0; i < idleFrameSize; i++) {
-			idleFrames[i] = sheet[0][i];
-		}
-		idleAnimation = new Animation<TextureRegion>(0.1f, idleFrames);
-		int walkingFrameSize = 7;
-		TextureRegion[] walkingFrames = new TextureRegion[walkingFrameSize];
-		for (int i = 0; i < walkingFrameSize; i++) {
-			walkingFrames[i] = sheet[1][i];
-		}
-		walkingAnimation = new Animation<TextureRegion>(0.1f, walkingFrames);
 	}
 
 	@Override
@@ -107,6 +95,7 @@ public class GameScreen implements Screen {
 		TextureRegion walkingCurrentFrame = walkingAnimation.getKeyFrame(walkingStateTime, true);
 
 		game.batch.begin();
+		backgroundSprite.draw(game.batch);
 		input();
 		logic();
 		drawMap();
@@ -126,6 +115,25 @@ public class GameScreen implements Screen {
 		game.batch.end();
 		config();
 
+	}
+
+	public void handlePlayerSprite() {
+		playerSpriteSheet = new Texture("frog_spritesheet.png");
+		TextureRegion[][] sheet = TextureRegion.split(playerSpriteSheet, 64, 32);
+
+		// Get only idle frames from sprite sheet
+		int idleFrameSize = 4;
+		TextureRegion[] idleFrames = new TextureRegion[idleFrameSize];
+		for (int i = 0; i < idleFrameSize; i++) {
+			idleFrames[i] = sheet[0][i];
+		}
+		idleAnimation = new Animation<TextureRegion>(0.1f, idleFrames);
+		int walkingFrameSize = 7;
+		TextureRegion[] walkingFrames = new TextureRegion[walkingFrameSize];
+		for (int i = 0; i < walkingFrameSize; i++) {
+			walkingFrames[i] = sheet[1][i];
+		}
+		walkingAnimation = new Animation<TextureRegion>(0.1f, walkingFrames);
 	}
 
 	private void loadMap() {
@@ -274,12 +282,13 @@ public class GameScreen implements Screen {
 		}
 
 		if (isJump() && onGround) {
-			playerSprite.translateY(JUMP_SPEED);
+			jumpVelocity = JUMP_SPEED;
 		} else if (playerSprite.getY() > 0) {
 			// if not on floor, go down
-			playerSprite.translateY(-GRAVITY * tpf);
+			jumpVelocity = -GRAVITY * tpf;
 			onGround = false;
 		}
+		playerSprite.translateY(jumpVelocity);
 
 		for (Entry<String, Sprite> object : objects.entrySet()) {
 			String objectName = object.getKey();
@@ -377,7 +386,7 @@ public class GameScreen implements Screen {
 			if (aSprite.getY() < bSprite.getY()) {
 				// Bottom
 				aSprite.setY(bSprite.getY() - TILE_SIZE);
-				System.out.println("bottom");
+				jumpVelocity = 0;
 			} else {
 				// Top
 				aSprite.setY(bSprite.getY() + TILE_SIZE);
